@@ -1,3 +1,7 @@
+#my vids
+inputvids/
+outputvids/
+
 # IDE
 .idea/
 .vscode/
