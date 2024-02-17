@@ -4,7 +4,7 @@ from ultralytics import (
     YOLO,
 )  # this is the ultralytics library, which contains the YOLO model,a neural network that can detect objects in images
 
-model = YOLO("yolov8n.pt")
+model = YOLO("yolov8x.pt")
 box_annotator = sv.BoundingBoxAnnotator()
 
 
