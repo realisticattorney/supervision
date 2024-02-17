@@ -1,7 +1,7 @@
 #my vids
 inputvids/
 outputvids/
-
+yolov5x.pt
 # IDE
 .idea/
 .vscode/
