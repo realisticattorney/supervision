@@ -5,10 +5,11 @@ import numpy as np
 from ultralytics import (
     YOLO,
 )
+from collections import defaultdict, deque
 
 SOURCE = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
 
-TARGET_WIDTH = 900 #cm
+TARGET_WIDTH = 900  # cm
 TARGET_HEIGHT = 1350
 
 TARGET = np.array(
@@ -67,6 +68,8 @@ if __name__ == "__main__":
     polygon_zone = sv.PolygonZone(SOURCE, frame_resolution_wh=video_info.resolution_wh)
     view_transformer = ViewTransformer(SOURCE, TARGET)
 
+    coordinates = defaultdict(lambda: deque(maxlen=video_info.fps))
+
     for frame in frame_generator:
         result = model(frame)[0]
         detections = sv.Detections.from_ultralytics(result)
@@ -76,8 +79,27 @@ if __name__ == "__main__":
         points = detections.get_anchors_coordinates(anchor=sv.Position.BOTTOM_CENTER)
         points = view_transformer.transform_points(points=points).astype(int)
 
+        scaling_factor = TARGET_HEIGHT / np.linalg.norm(TARGET[2] - TARGET[0])
         # labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
-        labels = [f"x: {x}, y: {y}" for [x, y] in points]
+        # labels = [f"x: {x}, y: {y}" for [x, y] in points]
+        labels = []
+        for tracker_id, [x, y] in zip(detections.tracker_id, points):
+            coordinates[tracker_id].append((x, y))
+            if len(coordinates[tracker_id]) < video_info.fps / 2:
+                labels.append(f"#{tracker_id}")
+            else:
+                x1, y1 = coordinates[tracker_id][0]
+                x2, y2 = coordinates[tracker_id][-1]
+
+                # Calculate pixel distance using Euclidean formula
+                distance_px = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+                # Convert distance to cm using the scaling factor
+                distance_cm = distance_px * scaling_factor
+                # Calculate speed; time elapsed is 1/30 of a second for each frame, but using the whole deque (0.5 seconds here)
+                speed = (
+                    distance_cm * 0.036 / (len(coordinates[tracker_id]) / 30)
+                )  # km/h
+                labels.append(f"#{tracker_id} {speed:.2f} km/h")
 
         annotated_frame = frame.copy()
         annotated_frame = sv.draw_polygon(
