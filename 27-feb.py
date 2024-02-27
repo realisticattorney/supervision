@@ -28,7 +28,7 @@ if __name__ == "__main__":
         resolution_wh=video_info.resolution_wh
     )
     text_scale = sv.calculate_dynamic_text_scale(resolution_wh=video_info.resolution_wh)
-    bounding_box_annotator = sv.BoundingBoxAnnotator(thickness=4)
+    bounding_box_annotator = sv.BoundingBoxAnnotator(thickness=thickness)
 
     label_annotator = sv.LabelAnnotator(text_scale=text_scale, text_thickness=thickness)
 
