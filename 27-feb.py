@@ -8,8 +8,29 @@ from ultralytics import (
 
 SOURCE = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
 
-TARGET_WIDTH = 9
-TARGET_HEIGHT = 13.5
+TARGET_WIDTH = 900 #cm
+TARGET_HEIGHT = 1350
+
+TARGET = np.array(
+    [
+        [0, 0],
+        [TARGET_WIDTH - 1, 0],
+        [TARGET_WIDTH - 1, TARGET_HEIGHT - 1],
+        [0, TARGET_HEIGHT - 1],
+    ]
+)
+
+
+class ViewTransformer:
+    def __init__(self, source: np.ndarray, target: np.ndarray):
+        source = source.astype(np.float32)
+        target = target.astype(np.float32)
+        self.m = cv2.getPerspectiveTransform(source, target)
+
+    def transform_points(self, points: np.ndarray) -> np.ndarray:
+        reshaped_points = points.reshape(-1, 1, 2).astype(np.float32)
+        transformed_points = cv2.perspectiveTransform(reshaped_points, self.m)
+        return transformed_points.reshape(-1, 2)
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -44,6 +65,7 @@ if __name__ == "__main__":
     )  # creates an instance of FrameGenerator to look over frames of our input video
 
     polygon_zone = sv.PolygonZone(SOURCE, frame_resolution_wh=video_info.resolution_wh)
+    view_transformer = ViewTransformer(SOURCE, TARGET)
 
     for frame in frame_generator:
         result = model(frame)[0]
@@ -51,7 +73,11 @@ if __name__ == "__main__":
         detections = detections[polygon_zone.trigger(detections)]
         detections = byte_track.update_with_detections(detections)
 
-        labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
+        points = detections.get_anchors_coordinates(anchor=sv.Position.BOTTOM_CENTER)
+        points = view_transformer.transform_points(points=points).astype(int)
+
+        # labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
+        labels = [f"x: {x}, y: {y}" for [x, y] in points]
 
         annotated_frame = frame.copy()
         annotated_frame = sv.draw_polygon(
