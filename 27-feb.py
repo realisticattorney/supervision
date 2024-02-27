@@ -1,10 +1,15 @@
 import argparse
 import cv2
 import supervision as sv
-
+import numpy as np
 from ultralytics import (
     YOLO,
 )
+
+SOURCE = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
+
+TARGET_WIDTH = 9
+TARGET_HEIGHT = 13.5
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -38,14 +43,22 @@ if __name__ == "__main__":
         args.source_video_path
     )  # creates an instance of FrameGenerator to look over frames of our input video
 
+    polygon_zone = sv.PolygonZone(SOURCE, frame_resolution_wh=video_info.resolution_wh)
+
     for frame in frame_generator:
         result = model(frame)[0]
         detections = sv.Detections.from_ultralytics(result)
+        detections = detections[polygon_zone.trigger(detections)]
         detections = byte_track.update_with_detections(detections)
 
         labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
 
         annotated_frame = frame.copy()
+        annotated_frame = sv.draw_polygon(
+            annotated_frame,
+            polygon=SOURCE,
+            color=sv.Color.red(),
+        )
         annotated_frame = bounding_box_annotator.annotate(
             scene=annotated_frame, detections=detections
         )
