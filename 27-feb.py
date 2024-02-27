@@ -21,9 +21,16 @@ def parse_arguments() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_arguments()
 
+    video_info = sv.VideoInfo.from_video_path(args.source_video_path)
     model = YOLO("yolov5xu.pt")
 
+    thickness = sv.calculate_dynamic_line_thickness(
+        resolution_wh=video_info.resolution_wh
+    )
+    text_scale = sv.calculate_dynamic_text_scale(resolution_wh=video_info.resolution_wh)
     bounding_box_annotator = sv.BoundingBoxAnnotator(thickness=4)
+
+    label_annotator = sv.LabelAnnotator(text_scale=text_scale, text_thickness=thickness)
 
     frame_generator = sv.get_video_frames_generator(
         args.source_video_path
@@ -35,6 +42,9 @@ if __name__ == "__main__":
 
         annotated_frame = frame.copy()
         annotated_frame = bounding_box_annotator.annotate(
+            scene=annotated_frame, detections=detections
+        )
+        annotated_frame = label_annotator.annotate(
             scene=annotated_frame, detections=detections
         )
 
