@@ -2,6 +2,7 @@
 inputvids/
 outputvids/
 yolov5x.pt
+yolov*
 # IDE
 .idea/
 .vscode/
