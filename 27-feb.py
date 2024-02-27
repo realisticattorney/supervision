@@ -24,6 +24,8 @@ if __name__ == "__main__":
     video_info = sv.VideoInfo.from_video_path(args.source_video_path)
     model = YOLO("yolov5xu.pt")
 
+    byte_track = sv.ByteTrack(frame_rate=video_info.fps)
+
     thickness = sv.calculate_dynamic_line_thickness(
         resolution_wh=video_info.resolution_wh
     )
@@ -39,13 +41,16 @@ if __name__ == "__main__":
     for frame in frame_generator:
         result = model(frame)[0]
         detections = sv.Detections.from_ultralytics(result)
+        detections = byte_track.update_with_detections(detections)
+
+        labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
 
         annotated_frame = frame.copy()
         annotated_frame = bounding_box_annotator.annotate(
             scene=annotated_frame, detections=detections
         )
         annotated_frame = label_annotator.annotate(
-            scene=annotated_frame, detections=detections
+            scene=annotated_frame, detections=detections, labels=labels
         )
 
         cv2.imshow("annotated_frame", annotated_frame)
