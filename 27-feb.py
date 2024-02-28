@@ -9,7 +9,7 @@ from collections import defaultdict, deque
 
 # SOURCE_2k_first_15mins = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
 SOURCE = np.array(
-    [[2649, 1180], [4639, 1611], [2955, 2558], [236, 1360]]
+    [[2649, 1203], [5141, 1350], [2955, 2581], [236, 1382]]
 )  # _4k_last_20mins
 
 TARGET_WIDTH = 1790  # cm
