@@ -7,10 +7,13 @@ from ultralytics import (
 )
 from collections import defaultdict, deque
 
-SOURCE = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
+# SOURCE_2k_first_15mins = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
+SOURCE = np.array(
+    [[2649, 1180], [4639, 1611], [2955, 2558], [236, 1360]]
+)  # _4k_last_20mins
 
-TARGET_WIDTH = 900  # cm
-TARGET_HEIGHT = 1350
+TARGET_WIDTH = 1790  # cm
+TARGET_HEIGHT = 2270
 
 TARGET = np.array(
     [
