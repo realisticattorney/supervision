@@ -1,5 +1,4 @@
 # to do:
-# shrink size of annotations in video
 # make it so that code outputs a video given a certain flag
 
 
@@ -50,6 +49,12 @@ def parse_arguments() -> argparse.Namespace:
         required=True,
         help="Path to the video to process",
     )
+    parser.add_argument(
+        "--output_video_path",
+        type=str,
+        default=None,
+        help="Path to save the output video with annotations, disables display if set.",
+    )
     return parser.parse_args()
 
 
@@ -80,6 +85,18 @@ if __name__ == "__main__":
     view_transformer = ViewTransformer(SOURCE, TARGET)
 
     coordinates = defaultdict(lambda: deque(maxlen=video_info.fps))
+
+    display_enabled = args.output_video_path is None
+
+    if args.output_video_path:
+        # Define the codec and create VideoWriter object
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for .mp4 files
+        out = cv2.VideoWriter(
+            args.output_video_path,
+            fourcc,
+            video_info.fps,
+            (video_info.resolution_wh[0], video_info.resolution_wh[1]),
+        )
 
     for frame in frame_generator:
         result = model(frame)[0]
@@ -124,11 +141,18 @@ if __name__ == "__main__":
         annotated_frame = label_annotator.annotate(
             scene=annotated_frame, detections=detections, labels=labels
         )
+        if args.output_video_path:
+            out.write(annotated_frame)  # Write the frame to the output video
 
-        cv2.imshow("annotated_frame", annotated_frame)
-        if cv2.waitKey(1) == ord("q"):
-            break
-    cv2.destroyAllWindows()
+        if display_enabled:
+            cv2.imshow("annotated_frame", annotated_frame)
+            if cv2.waitKey(1) == ord("q"):
+                break
+    if args.output_video_path:
+        out.release()  # Release the VideoWriter object
+
+    if display_enabled:
+        cv2.destroyAllWindows()  # Close all OpenCV windows
 #
 #
 #
