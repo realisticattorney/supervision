@@ -1,7 +1,3 @@
-# to do:
-# make it so that code outputs a video given a certain flag
-
-
 import argparse
 import cv2
 import supervision as sv
@@ -9,9 +5,11 @@ import numpy as np
 from ultralytics import (
     YOLO,
 )
+import torch
+
 from collections import defaultdict, deque
 
-# SOURCE = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]]) #_2k_first_15mins
+# SOURCE_2k_first_15mins = np.array([[774, 555], [2713, 689], [2357, 922], [-464, 641]])
 SOURCE = np.array(
     [[2649, 1203], [5141, 1350], [2955, 2581], [236, 1382]]
 )  # _4k_last_20mins
@@ -62,7 +60,8 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     video_info = sv.VideoInfo.from_video_path(args.source_video_path)
-    model = YOLO("yolov8x.pt")
+    # model = YOLO("yolov5xu.pt")
+    model = torch.hub.load("ultralytics/yolov5", "custom", path="./best.pt")
 
     byte_track = sv.ByteTrack(frame_rate=video_info.fps)
 
@@ -99,8 +98,25 @@ if __name__ == "__main__":
         )
 
     for frame in frame_generator:
-        result = model(frame)[0]
-        detections = sv.Detections.from_ultralytics(result)
+        # result = model(frame)[0]
+        # Convert the frame from BGR (OpenCV default) to RGB (expected by the model)
+        # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # # Perform inference, specifying the size for resizing the input images
+        # results = model([frame_rgb], size=640)
+        # # Extract the detection results for the first image in the batch
+        # detections = results.xyxy[0]
+
+        result = model(frame)
+        detections = sv.Detections.from_yolov5(result)
+
+        # formatted_detections = []
+        # for det in detections:
+        #     x1, y1, x2, y2, conf, cls = det.cpu().numpy()
+        #     formatted_detection = {"bbox": [x1, y1, x2, y2], "conf": conf, "cls": cls}
+        #     formatted_detections.append(formatted_detection)
+
+        # detections = sv.Detections.from_ultralytics(result)
+        detections = sv.Detections.from_yolov5(detections)
         detections = detections[polygon_zone.trigger(detections)]
         detections = byte_track.update_with_detections(detections)
 
@@ -108,8 +124,6 @@ if __name__ == "__main__":
         points = view_transformer.transform_points(points=points).astype(int)
 
         scaling_factor = TARGET_HEIGHT / np.linalg.norm(TARGET[2] - TARGET[0])
-        # labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
-        # labels = [f"x: {x}, y: {y}" for [x, y] in points]
         labels = []
         for tracker_id, [x, y] in zip(detections.tracker_id, points):
             coordinates[tracker_id].append((x, y))
