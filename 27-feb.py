@@ -1,3 +1,8 @@
+# to do:
+# shrink size of annotations in video
+# make it so that code outputs a video given a certain flag
+
+
 import argparse
 import cv2
 import supervision as sv
@@ -56,10 +61,13 @@ if __name__ == "__main__":
 
     byte_track = sv.ByteTrack(frame_rate=video_info.fps)
 
-    thickness = sv.calculate_dynamic_line_thickness(
-        resolution_wh=video_info.resolution_wh
+    scaled_resolution_wh = (
+        video_info.resolution_wh[0] // 2,
+        video_info.resolution_wh[1] // 2,
     )
-    text_scale = sv.calculate_dynamic_text_scale(resolution_wh=video_info.resolution_wh)
+
+    thickness = sv.calculate_dynamic_line_thickness(resolution_wh=scaled_resolution_wh)
+    text_scale = sv.calculate_dynamic_text_scale(resolution_wh=scaled_resolution_wh)
     bounding_box_annotator = sv.BoundingBoxAnnotator(thickness=thickness)
 
     label_annotator = sv.LabelAnnotator(text_scale=text_scale, text_thickness=thickness)
