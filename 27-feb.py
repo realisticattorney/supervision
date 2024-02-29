@@ -33,7 +33,7 @@ TARGET = np.array(
 
 class ViewTransformer:
     def __init__(self, source: np.ndarray, target: np.ndarray):
-        source = source.astype(np.float32)
+        source = source.astype(np.float32) #converts the source array to a float32 type
         target = target.astype(np.float32)
         self.m = cv2.getPerspectiveTransform(source, target)
 
@@ -60,7 +60,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": #if the __name__ variable is set to __main__ which is what happens when the file is being run directly, not imported, then the code will run
     args = parse_arguments()
 
     video_info = sv.VideoInfo.from_video_path(args.source_video_path)
