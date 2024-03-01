@@ -2,6 +2,7 @@
 inputvids/
 outputvids/
 yolov5x.pt
+yolov*
 # IDE
 .idea/
 .vscode/
@@ -10,7 +11,7 @@ yolov5x.pt
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.pt
 # C extensions
 *.so
 
